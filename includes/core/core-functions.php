@@ -306,7 +306,9 @@ function csv_import_get_default_value( string $key ) {
 
 /**
  * Validiert die Plugin-Konfiguration
- * * @param array $config Konfigurationsdaten
+ * KORRIGIERTE VERSION: Fängt ungültige Template-IDs sicher ab.
+ *
+ * @param array $config Konfigurationsdaten
  * @return array Validierungsergebnis
  */
 function csv_import_validate_config( $config ): array {
@@ -317,30 +319,86 @@ function csv_import_validate_config( $config ): array {
         'dropbox_ready' => false,
         'local_ready' => false
     ];
-    
+
     // Post-Typ prüfen
     if ( empty( $config['post_type'] ) || ! post_type_exists( $config['post_type'] ) ) {
         $errors[] = 'Ungültiger oder fehlender Post-Typ: ' . ($config['post_type'] ?? 'nicht gesetzt');
     }
-    
+
     // Post-Status prüfen
     $valid_statuses = ['publish', 'draft', 'private', 'pending'];
     if ( ! in_array( $config['post_status'] ?? '', $valid_statuses ) ) {
         $errors[] = 'Ungültiger Post-Status: ' . ($config['post_status'] ?? 'nicht gesetzt');
     }
-    
+
     // Template ID prüfen (falls Elementor/Gutenberg)
     if ( in_array( $config['page_builder'] ?? '', ['elementor', 'gutenberg'] ) ) {
         if ( empty( $config['template_id'] ) || ! is_numeric( $config['template_id'] ) ) {
             $errors[] = 'Template ID ist erforderlich für den gewählten Page Builder';
         } else {
-            // Prüfen ob Template existiert
+            // KORREKTUR: Prüfen ob Template existiert
             $template_post = get_post( $config['template_id'] );
             if ( ! $template_post ) {
-                $errors[] = 'Template mit ID ' . $config['template_id'] . ' wurde nicht gefunden';
+                $errors[] = 'Template mit ID ' . $config['template_id'] . ' wurde nicht gefunden. Bitte korrigieren Sie die ID in den Einstellungen.';
             }
         }
     }
+
+    // Dropbox URL prüfen
+    if ( ! empty( $config['dropbox_url'] ) ) {
+        if ( filter_var( $config['dropbox_url'], FILTER_VALIDATE_URL ) ) {
+            if ( strpos( $config['dropbox_url'], 'dropbox.com' ) !== false ) {
+                $validation['dropbox_ready'] = true;
+            } else {
+                $errors[] = 'URL ist kein gültiger Dropbox-Link';
+            }
+        } else {
+            $errors[] = 'Dropbox URL ist nicht gültig: ' . $config['dropbox_url'];
+        }
+    }
+
+    // Lokaler Pfad prüfen
+    if ( ! empty( $config['local_path'] ) ) {
+        $full_path = ABSPATH . ltrim( $config['local_path'], '/' );
+        if ( file_exists( $full_path ) && is_readable( $full_path ) ) {
+            $validation['local_ready'] = true;
+        } else {
+            $errors[] = 'Lokaler Pfad existiert nicht oder ist nicht lesbar: ' . $config['local_path'];
+        }
+    }
+
+    if ( ! $validation['dropbox_ready'] && ! $validation['local_ready'] ) {
+        $errors[] = 'Mindestens eine CSV-Quelle (Dropbox oder lokal) muss konfiguriert und verfügbar sein';
+    }
+
+    $required_columns = $config['required_columns'] ?? [];
+    if ( is_string( $required_columns ) ) {
+        $required_columns = array_filter( array_map( 'trim', explode( "\n", $required_columns ) ) );
+    }
+    if ( empty( $required_columns ) ) {
+        $errors[] = 'Erforderliche Spalten müssen definiert sein';
+    }
+
+    if ( ( $config['image_source'] ?? 'none' ) !== 'none' ) {
+        $image_dir = ABSPATH . ltrim( $config['image_folder'] ?? '', '/' );
+        if ( ! is_dir( $image_dir ) ) {
+            $errors[] = 'Bildordner existiert nicht: ' . ($config['image_folder'] ?? 'nicht gesetzt');
+        } elseif ( ! is_writable( $image_dir ) ) {
+            $errors[] = 'Bildordner ist nicht beschreibbar: ' . $config['image_folder'];
+        }
+    }
+
+    $memory_limit = $config['memory_limit'] ?? '256M';
+    $memory_bytes = csv_import_convert_to_bytes( $memory_limit );
+    if ( $memory_bytes < csv_import_convert_to_bytes( '128M' ) ) {
+        $errors[] = 'Memory Limit sollte mindestens 128M betragen (aktuell: ' . $memory_limit . ')';
+    }
+
+    $validation['errors'] = $errors;
+    $validation['valid'] = empty( $errors );
+
+    return $validation;
+}
     
     // Dropbox URL prüfen
     if ( ! empty( $config['dropbox_url'] ) ) {
