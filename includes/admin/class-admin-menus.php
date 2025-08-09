@@ -548,7 +548,7 @@ class CSV_Import_Pro_Admin {
 	 */
 	public function display_main_page() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'Du bist nicht berechtigt, auf diese Seite zuzugreifen.', 'csv-import' ) );
+			wp_die( __( 'Du bist leider nicht berechtigt, auf diese Seite zuzugreifen.', 'csv-import' ) );
 		}
 		
 		$this->load_page_data( 'main' );
