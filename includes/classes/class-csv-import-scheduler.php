@@ -137,7 +137,7 @@ class CSV_Import_Scheduler {
             self::unschedule_import();
             
             // Validierung
-            if ( ! in_array( $frequency, array_keys( self::INTERVALS ) ) ) {
+            if ( ! array_key_exists( $frequency, self::INTERVALS ) ) {
                 throw new Exception( 'Ungültige Frequenz: ' . $frequency );
             }
             
@@ -154,7 +154,7 @@ class CSV_Import_Scheduler {
                 $start_time, 
                 $frequency, 
                 self::HOOK_SCHEDULED_IMPORT,
-                [ $source, $options ]
+                [ 'source' => $source, 'options' => $options ]
             );
             
             if ( $result === false ) {
@@ -169,7 +169,8 @@ class CSV_Import_Scheduler {
             
             // Logging
             if ( class_exists( 'CSV_Import_Error_Handler' ) ) {
-                CSV_Import_Error_Handler::log_info( 
+                CSV_Import_Error_Handler::handle( 
+                    CSV_Import_Error_Handler::LEVEL_INFO,
                     "Geplanter Import aktiviert: {$frequency} für Quelle {$source}",
                     [
                         'start_time' => date( 'Y-m-d H:i:s', $start_time ),
@@ -182,7 +183,8 @@ class CSV_Import_Scheduler {
             
         } catch ( Exception $e ) {
             if ( class_exists( 'CSV_Import_Error_Handler' ) ) {
-                CSV_Import_Error_Handler::log_error(
+                CSV_Import_Error_Handler::handle(
+                    CSV_Import_Error_Handler::LEVEL_ERROR,
                     'Fehler beim Planen des Imports: ' . $e->getMessage(),
                     [
                         'frequency' => $frequency,
@@ -204,7 +206,11 @@ class CSV_Import_Scheduler {
         $timestamp = wp_next_scheduled( self::HOOK_SCHEDULED_IMPORT );
         
         if ( $timestamp ) {
-            wp_unschedule_event( $timestamp, self::HOOK_SCHEDULED_IMPORT );
+            // Args müssen übereinstimmen, um das Event korrekt zu entfernen
+            $args = get_option('csv_import_scheduled_args', null);
+            if ($args !== null) {
+                wp_unschedule_event( $timestamp, self::HOOK_SCHEDULED_IMPORT, $args );
+            }
         }
         
         // Alle Events dieses Typs löschen (Sicherheit)
@@ -215,10 +221,11 @@ class CSV_Import_Scheduler {
         delete_option( 'csv_import_scheduled_source' );
         delete_option( 'csv_import_scheduled_options' );
         delete_option( 'csv_import_scheduled_start' );
+        delete_option( 'csv_import_scheduled_args');
         
         // Logging
         if ( class_exists( 'CSV_Import_Error_Handler' ) ) {
-            CSV_Import_Error_Handler::log_info( 'Geplanter Import deaktiviert' );
+            CSV_Import_Error_Handler::handle(CSV_Import_Error_Handler::LEVEL_INFO, 'Geplanter Import deaktiviert' );
         }
         
         return true;
@@ -244,7 +251,8 @@ class CSV_Import_Scheduler {
             'csv_import_scheduled_source', 
             'csv_import_scheduled_options',
             'csv_import_scheduled_start',
-            'csv_import_scheduler_stats'
+            'csv_import_scheduler_stats',
+            'csv_import_scheduled_args'
         ];
         
         foreach ( $options_to_delete as $option ) {
@@ -258,10 +266,11 @@ class CSV_Import_Scheduler {
     
     /**
      * Führt einen geplanten Import aus
-     * * @param string $source
-     * @param array $options
+     * * @param array $args
      */
-    public function execute_scheduled_import( $source = 'local', $options = [] ) {
+    public function execute_scheduled_import( $args = [] ) {
+        $source = $args['source'] ?? get_option('csv_import_scheduled_source', 'local');
+
         // Bereits laufenden Import prüfen
         if ( function_exists( 'csv_import_is_import_running' ) && csv_import_is_import_running() ) {
             $this->log_scheduler_event( 'warning', 'Geplanter Import übersprungen - bereits ein Import läuft' );
