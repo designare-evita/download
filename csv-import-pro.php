@@ -574,6 +574,9 @@ final class CSV_Import_Pro {
 	/**
 	 * Plugin-Aktivierung
 	 */
+	/**
+	 * Plugin-Aktivierung
+	 */
 	public function activate_plugin() {
 		// Installer aufrufen falls verfügbar
 		if ( class_exists( 'Installer' ) && method_exists( 'Installer', 'activate' ) ) {
@@ -587,10 +590,12 @@ final class CSV_Import_Pro {
 		update_option( 'csv_import_pro_version', $this->version );
 		update_option( 'csv_import_pro_activated', current_time( 'mysql' ) );
 
+        // KORREKTUR: Transient für die Admin-Notice nach der Aktivierung setzen
+        set_transient( 'csv_import_pro_activated', true, 60 );
+
 		// Flush rewrite rules
 		flush_rewrite_rules();
 	}
-
 	/**
 	 * Plugin-Deaktivierung (statische Methode)
 	 */
