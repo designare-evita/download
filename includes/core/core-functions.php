@@ -1440,18 +1440,22 @@ function csv_import_update_import_stats( array $result, string $source ): void {
  */
 function csv_import_get_template_info(): string {
     $id = get_option( 'csv_import_template_id' );
-    if ( ! $id || $id == 0 ) {
+    if ( ! $id || ! is_numeric($id) || $id == 0 ) {
         return '<span style="color:red;">❌ Nicht gesetzt</span>';
     }
-    
+
     $post = get_post( $id );
+
+    // DIES IST DIE ENTSCHEIDENDE KORREKTUR:
+    // Prüfen, ob der Post überhaupt gefunden wurde.
     if ( ! $post ) {
-        return '<span style="color:red;">❌ Template mit ID ' . $id . ' nicht gefunden</span>';
+        return '<span style="color:red;">❌ Fehler: Template mit ID ' . esc_html($id) . ' wurde nicht gefunden. Bitte in den Einstellungen eine neue, gültige ID eintragen.</span>';
     }
-    
+
+    // Ab hier ist sicher, dass $post ein gültiges Objekt ist.
     $edit_link = get_edit_post_link( $id );
     $view_link = get_permalink( $id );
-    
+
     return sprintf(
         '✅ <strong>"%s"</strong> (ID: %d)<br>' .
         '<small>Status: %s | Typ: %s</small><br>' .
