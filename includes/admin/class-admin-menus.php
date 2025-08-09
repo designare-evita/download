@@ -155,43 +155,47 @@ class CSV_Import_Pro_Admin {
 	/**
 	 * Registriert das Admin-Menü und Untermenüs - KORRIGIERT
 	 */
+/**
+	 * Registriert das Admin-Menü und Untermenüs.
+	 * KORRIGIERTE VERSION: Verwendet die 'capability' aus der Konfiguration,
+	 * statt sie hart zu codieren.
+	 */
 	public function register_admin_menu() {
-		// Sicherheitscheck
+		// Der initiale Sicherheitscheck ist gut, da niemand ohne diese Basis-Berechtigung
+		// überhaupt Menüs sehen sollte.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
 		$main_config = $this->menu_config['main'];
 		
-		// Hauptmenüpunkt hinzufügen mit expliziter Capability
+		// Hauptmenüpunkt hinzufügen
 		$main_page = add_menu_page(
 			$main_config['page_title'],
 			$main_config['menu_title'],
-			'manage_options', // Explizit setzen statt $main_config['capability']
+			$main_config['capability'], // KORREKTUR: Wert aus der Konfiguration verwenden
 			$main_config['menu_slug'],
 			$main_config['callback'],
 			$main_config['icon_url'],
 			$main_config['position']
 		);
 
-		// Hook für Hauptseite
 		if ( $main_page ) {
 			add_action( "load-{$main_page}", [ $this, 'load_main_page' ] );
 			$this->admin_pages['main'] = $main_page;
 		}
 
-		// Untermenüs hinzufügen mit korrekten Capabilities
+		// Untermenüs hinzufügen
 		foreach ( $this->menu_config['submenus'] as $submenu_key => $submenu_config ) {
 			$submenu_page = add_submenu_page(
-				$this->menu_slug,              // Parent-Slug
+				$this->menu_slug,
 				$submenu_config['page_title'],
 				$submenu_config['menu_title'],
-				'manage_options',               // Explizite Capability für jedes Untermenü
+				$submenu_config['capability'], // KORREKTUR: Wert aus der Konfiguration verwenden
 				$submenu_config['menu_slug'],
 				$submenu_config['callback']
 			);
 
-			// Hook für Unterseite
 			if ( $submenu_page ) {
 				add_action( "load-{$submenu_page}", [ $this, 'load_submenu_page' ] );
 				$this->admin_pages[$submenu_key] = $submenu_page;
@@ -204,7 +208,7 @@ class CSV_Import_Pro_Admin {
 				$this->menu_slug,
 				__( 'CSV Import Debug', 'csv-import' ),
 				__( '🔧 Debug', 'csv-import' ),
-				'manage_options',
+				'manage_options', // Debug-Seite sollte immer nur für Admins sein
 				'csv-import-debug',
 				[ $this, 'display_debug_page' ]
 			);
@@ -213,7 +217,6 @@ class CSV_Import_Pro_Admin {
 			}
 		}
 
-		// Plugin-Info zur WordPress-Übersicht hinzufügen
 		$this->maybe_add_dashboard_widget();
 	}
 
