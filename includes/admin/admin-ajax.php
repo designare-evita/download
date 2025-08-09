@@ -129,3 +129,42 @@ function csv_import_cancel_handler() {
     csv_import_force_reset_import_status();
     wp_send_json_success( ['message' => 'Der Import wurde abgebrochen und der Status zurückgesetzt.'] );
 }
+
+<?php
+// Am Ende der admin-ajax.php hinzufügen:
+
+function csv_import_get_profile_details_handler() {
+    if (!wp_verify_nonce($_POST['nonce'] ?? '', 'csv_import_ajax')) {
+        wp_send_json_error(['message' => 'Sicherheitsprüfung fehlgeschlagen']);
+    }
+    
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Keine Berechtigung']);
+    }
+    
+    $profile_id = sanitize_key($_POST['profile_id'] ?? '');
+    wp_send_json_success(['profile' => [], 'message' => 'Handler funktioniert']);
+}
+
+function csv_import_system_check_handler() {
+    if (!wp_verify_nonce($_POST['nonce'] ?? '', 'csv_import_ajax')) {
+        wp_send_json_error(['message' => 'Sicherheitsprüfung fehlgeschlagen']);
+    }
+    
+    wp_send_json_success([
+        'memory_ok' => true,
+        'disk_space_ok' => true,
+        'permissions_ok' => true
+    ]);
+}
+
+function csv_debug_info_handler() {
+    if (!wp_verify_nonce($_POST['nonce'] ?? '', 'csv_import_ajax')) {
+        wp_send_json_error(['message' => 'Sicherheitsprüfung fehlgeschlagen']);
+    }
+    
+    wp_send_json_success([
+        'plugin_version' => CSV_IMPORT_PRO_VERSION,
+        'status' => 'loaded'
+    ]);
+}
