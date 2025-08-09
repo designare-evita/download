@@ -590,7 +590,7 @@ final class CSV_Import_Pro {
 		update_option( 'csv_import_pro_version', $this->version );
 		update_option( 'csv_import_pro_activated', current_time( 'mysql' ) );
 
-        // KORREKTUR: Transient für die Admin-Notice nach der Aktivierung setzen
+        // DIESE ZEILE HINZUFÜGEN
         set_transient( 'csv_import_pro_activated', true, 60 );
 
 		// Flush rewrite rules
