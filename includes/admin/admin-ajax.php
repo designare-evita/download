@@ -130,7 +130,6 @@ function csv_import_cancel_handler() {
     wp_send_json_success( ['message' => 'Der Import wurde abgebrochen und der Status zurückgesetzt.'] );
 }
 
-<?php
 // Am Ende der admin-ajax.php hinzufügen:
 
 function csv_import_get_profile_details_handler() {
