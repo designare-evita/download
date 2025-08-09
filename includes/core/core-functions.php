@@ -1689,7 +1689,7 @@ function csv_import_cleanup_temp_files( int $older_than_hours = 24 ): void {
         }
         
         // Leere Verzeichnisse entfernen
-        if ( is_dir_empty( $temp_dir ) ) {
+        if ( csv_import_is_dir_empty( $temp_dir ) ) {
             @rmdir( $temp_dir );
         }
     }
