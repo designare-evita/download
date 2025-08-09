@@ -148,8 +148,6 @@ class CSV_Import_Pro_Admin {
 		// Admin-Footer-Text anpassen auf Plugin-Seiten
 		add_filter( 'admin_footer_text', [ $this, 'admin_footer_text' ] );
 		
-		// Sicherheitscheck für alle Plugin-Seiten
-		add_action( 'current_screen', [ $this, 'check_page_access' ] );
 	}
 
 	/**
