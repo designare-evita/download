@@ -157,6 +157,8 @@ if ( ! class_exists( 'CSV_Import_Error_Handler' ) ) {
             }
         }
         
+        // ... (restlicher Code der Klasse) ...
+        
         public static function init() {
             self::$error_counts = get_option( 'csv_import_error_counts', [] );
         }
