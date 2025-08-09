@@ -1702,7 +1702,7 @@ function csv_import_cleanup_temp_files( int $older_than_hours = 24 ): void {
 /**
  * Prüft ob ein Verzeichnis leer ist
  */
-function is_dir_empty( string $dir ): bool {
+function csv_import_is_dir_empty( string $dir ): bool {
     if ( ! is_readable( $dir ) ) {
         return false;
     }
