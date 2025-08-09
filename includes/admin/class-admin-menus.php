@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Erstellt die Admin-Menüs und steuert die Anzeige der Plugin-Seiten.
- * Version 7.4 - FINALE KORREKTUR: Verhindert Übergabe von NULL-Werten an WordPress-Core-Funktionen.
+ * Version 7.4 - FINALE KORREKTUR: Syntaxfehler behoben und Berechtigungsprüfung stabilisiert.
  * @since 6.0
  */
 class CSV_Import_Pro_Admin {
@@ -20,9 +20,6 @@ class CSV_Import_Pro_Admin {
 		$this->init_hooks();
 	}
 
-	/**
-	 * Konfiguriert Menü-Struktur mit korrekten Capabilities und Fallbacks für Titel.
-	 */
 	private function setup_menu_config() {
 		$this->menu_config = [
 			'main' => [
