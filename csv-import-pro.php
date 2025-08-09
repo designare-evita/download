@@ -142,7 +142,58 @@ final class CSV_Import_Pro {
 		add_action( 'plugins_loaded', [ $this, 'check_requirements' ], 10 );
 		add_action( 'plugins_loaded', [ $this, 'load_core_components' ], 15 );
 		add_action( 'plugins_loaded', [ $this, 'init_feature_classes' ], 20 );
+		add_action( 'plugins_loaded', [ $this, 'register_ajax_handlers' ], 25 );
 		add_action( 'init', [ $this, 'late_init' ], 10 );
+	}
+
+	/**
+	 * Registriert AJAX-Handler zentral
+	 */
+	public function register_ajax_handlers() {
+		// Nur in Admin-Bereich und wenn Anforderungen erfüllt sind
+		if ( ! is_admin() || ! $this->status['requirements_met'] ) {
+			return;
+		}
+
+		// Sicherstellen, dass die Handler-Datei geladen ist
+		$this->include_if_exists( 'includes/admin/admin-ajax.php', true );
+
+		// AJAX-Aktionen definieren
+		$ajax_actions = [
+			'csv_import_validate',
+			'csv_import_start',
+			'csv_import_get_progress',
+			'csv_import_cancel',
+			'csv_import_get_profile_details',
+			'csv_import_system_check',
+			'csv_debug_info'
+		];
+
+		// Handler registrieren
+		foreach ( $ajax_actions as $action ) {
+			$handler_function = $action . '_handler';
+			
+			if ( function_exists( $handler_function ) ) {
+				add_action( 'wp_ajax_' . $action, $handler_function );
+				
+				// Für bestimmte Aktionen auch für nicht-angemeldete Benutzer verfügbar machen
+				if ( in_array( $action, [ 'csv_import_get_progress' ] ) ) {
+					add_action( 'wp_ajax_nopriv_' . $action, $handler_function );
+				}
+			} else {
+				if ( CSV_IMPORT_DEBUG ) {
+					error_log( "CSV Import Pro: AJAX-Handler nicht gefunden: {$handler_function}" );
+				}
+			}
+		}
+
+		if ( CSV_IMPORT_DEBUG ) {
+			error_log( sprintf(
+				'CSV Import Pro: %d AJAX-Handler registriert: %s',
+				count( $ajax_actions ),
+				implode( ', ', $ajax_actions )
+			) );
+		}
 	}
 
 	/**
@@ -446,9 +497,8 @@ final class CSV_Import_Pro {
 			return;
 		}
 
-		// Admin-Klassen laden
+		// Admin-Klassen laden (AJAX-Handler werden separat in register_ajax_handlers() geladen)
 		$this->include_if_exists( 'includes/admin/class-admin-menus.php', true );
-		$this->include_if_exists( 'includes/admin/admin-ajax.php', true );
 
 		// Admin-Menüs initialisieren
 		if ( class_exists( 'CSV_Import_Pro_Admin' ) ) {
