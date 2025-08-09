@@ -1,6 +1,7 @@
 <?php
 /**
  * Behandelt die Aktivierungs- und Deinstallations-Logik des Plugins.
+ * KORRIGIERTE VERSION: Lädt Abhängigkeiten explizit, um Aktivierungsfehler zu verhindern.
  */
 class Installer {
 
@@ -8,12 +9,18 @@ class Installer {
      * Wird bei der Plugin-Aktivierung ausgeführt.
      */
     public static function activate() {
+        // KORREKTUR: Alle notwendigen Abhängigkeiten direkt hier laden.
+        // Dies stellt sicher, dass die Aktivierung unabhängig von der Lade-Reihenfolge funktioniert.
+        $plugin_path = plugin_dir_path( __DIR__ );
+        require_once $plugin_path . 'includes/core/core-functions.php';
+        require_once $plugin_path . 'includes/class-csv-import-error-handler.php';
+
         try {
             // Verzeichnisse erstellen
             $image_folder_path = get_option('csv_import_image_folder', 'wp-content/uploads/csv-import-images/');
             $directories = [
                 ABSPATH . 'data/',
-                ABSPATH . $image_folder_path
+                ABSPATH . ltrim($image_folder_path, '/')
             ];
 
             foreach ($directories as $dir) {
@@ -39,17 +46,18 @@ class Installer {
             }
 
             // Plugin-Version speichern
-            update_option('csv_import_version', '5.1');
+            update_option('csv_import_pro_version', '6.2');
 
+            // Log-Eintrag
             CSV_Import_Error_Handler::handle(
                 CSV_Import_Error_Handler::LEVEL_INFO,
-                'CSV Import System V5.1 aktiviert'
+                'CSV Import System V6.2 erfolgreich aktiviert'
             );
 
         } catch (Exception $e) {
             // Bei einem Fehler während der Aktivierung, das Plugin sofort wieder deaktivieren.
             deactivate_plugins(plugin_basename(CSV_IMPORT_PRO_PATH . 'csv-import-pro.php'));
-            wp_die('Plugin-Aktivierung fehlgeschlagen: ' . $e->getMessage());
+            wp_die('Plugin-Aktivierung fehlgeschlagen: ' . esc_html($e->getMessage()));
         }
     }
 }
