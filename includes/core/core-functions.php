@@ -305,6 +305,7 @@ function csv_import_get_default_value( string $key ) {
 // ===================================================================
 
 /**
+/**
  * Validiert die Plugin-Konfiguration
  * KORRIGIERTE VERSION: Fängt ungültige Template-IDs sicher ab.
  *
@@ -397,67 +398,6 @@ function csv_import_validate_config( $config ): array {
     $validation['errors'] = $errors;
     $validation['valid'] = empty( $errors );
 
-    return $validation;
-}
-    
-    // Dropbox URL prüfen
-    if ( ! empty( $config['dropbox_url'] ) ) {
-        if ( filter_var( $config['dropbox_url'], FILTER_VALIDATE_URL ) ) {
-            // Zusätzlich prüfen ob es eine Dropbox URL ist
-            if ( strpos( $config['dropbox_url'], 'dropbox.com' ) !== false ) {
-                $validation['dropbox_ready'] = true;
-            } else {
-                $errors[] = 'URL ist kein gültiger Dropbox-Link';
-            }
-        } else {
-            $errors[] = 'Dropbox URL ist nicht gültig: ' . $config['dropbox_url'];
-        }
-    }
-    
-    // Lokaler Pfad prüfen
-    if ( ! empty( $config['local_path'] ) ) {
-        $full_path = ABSPATH . ltrim( $config['local_path'], '/' );
-        if ( file_exists( $full_path ) && is_readable( $full_path ) ) {
-            $validation['local_ready'] = true;
-        } else {
-            $errors[] = 'Lokaler Pfad existiert nicht oder ist nicht lesbar: ' . $config['local_path'];
-        }
-    }
-    
-    // Mindestens eine Quelle muss konfiguriert sein
-    if ( ! $validation['dropbox_ready'] && ! $validation['local_ready'] ) {
-        $errors[] = 'Mindestens eine CSV-Quelle (Dropbox oder lokal) muss konfiguriert und verfügbar sein';
-    }
-    
-    // Erforderliche Spalten prüfen
-    $required_columns = $config['required_columns'] ?? [];
-    if ( is_string( $required_columns ) ) {
-        $required_columns = array_filter( array_map( 'trim', explode( "\n", $required_columns ) ) );
-    }
-    if ( empty( $required_columns ) ) {
-        $errors[] = 'Erforderliche Spalten müssen definiert sein';
-    }
-    
-    // Bildordner prüfen (falls Bildimport aktiviert)
-    if ( ( $config['image_source'] ?? 'none' ) !== 'none' ) {
-        $image_dir = ABSPATH . ltrim( $config['image_folder'] ?? '', '/' );
-        if ( ! is_dir( $image_dir ) ) {
-            $errors[] = 'Bildordner existiert nicht: ' . ($config['image_folder'] ?? 'nicht gesetzt');
-        } elseif ( ! is_writable( $image_dir ) ) {
-            $errors[] = 'Bildordner ist nicht beschreibbar: ' . $config['image_folder'];
-        }
-    }
-    
-    // Memory Limit prüfen
-    $memory_limit = $config['memory_limit'] ?? '256M';
-    $memory_bytes = csv_import_convert_to_bytes( $memory_limit );
-    if ( $memory_bytes < csv_import_convert_to_bytes( '128M' ) ) {
-        $errors[] = 'Memory Limit sollte mindestens 128M betragen (aktuell: ' . $memory_limit . ')';
-    }
-    
-    $validation['errors'] = $errors;
-    $validation['valid'] = empty( $errors );
-    
     return $validation;
 }
 
