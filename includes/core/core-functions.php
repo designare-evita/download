@@ -1433,6 +1433,7 @@ function csv_import_update_import_stats( array $result, string $source ): void {
 
 /**
  * Holt Informationen zum Template-Post für die Anzeige im Admin-Bereich.
+ * KORRIGIERTE VERSION: Prüft, ob der Post tatsächlich existiert, bevor auf ihn zugegriffen wird.
  *
  * @return string
  */
@@ -1447,7 +1448,7 @@ function csv_import_get_template_info(): string {
     // DIES IST DIE ENTSCHEIDENDE KORREKTUR:
     // Prüfen, ob der Post überhaupt gefunden wurde.
     if ( ! $post ) {
-        return '<span style="color:red;">❌ Fehler: Template mit ID ' . esc_html($id) . ' wurde nicht gefunden. Bitte in den Einstellungen eine neue, gültige ID eintragen.</span>';
+        return '<span style="color:orange;">⚠️ Warnung: Template mit ID ' . esc_html($id) . ' wurde nicht gefunden. Bitte in den Einstellungen eine neue, gültige ID eintragen.</span>';
     }
 
     // Ab hier ist sicher, dass $post ein gültiges Objekt ist.
